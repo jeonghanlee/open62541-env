@@ -5,10 +5,21 @@
 An open source implementation of OPC UA (`open62541`) Configuration Environment and its customized application.
 
 * The source codes are located in <https://github.com/open62541/open62541>
-* Required packages (Debian and its variants) as follows
+
+## Required packages
+
+* Debian and its variants
 
 ```bash
-sudo apt-get install git build-essential gcc pkg-config cmake python3 libssl3 libssl-dev
+sudo apt install git build-essential gcc pkg-config cmake python3 libssl3 libssl-dev
+
+```
+
+* Redhat and its variants
+
+```bash
+sudo dnf install git gcc pkg-config cmake python3 openssl3 openssl3-devel
+
 ```
 
 ## About
