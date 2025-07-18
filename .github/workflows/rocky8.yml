@@ -24,7 +24,7 @@ jobs:
         dnf install -y git tree make sudo bash wget unzip
         git clone https://github.com/jeonghanlee/pkg_automation
         bash pkg_automation/pkg_automation.bash -y
-        dnf install -y openssl3 openssl3-devel compat-openssl10 cmake
+        dnf install -y openssel-devel openssl openssl3 openssl3-devel compat-openssl10 cmake
     - name: Setup
       run: |
         make init
