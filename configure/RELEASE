@@ -1,0 +1,17 @@
+
+APPNAME:=open62541
+
+##- Where the Source repository SRC_URL/SRC_NAME
+SRC_URL:=https://github.com/open62541
+SRC_NAME:=${APPNAME}
+
+
+##- Which the source tag / branch / hash id would like to use
+SRC_TAG:=tags/v1.4.12
+
+##- Placeholder for the site-specific version control 
+SRC_VERSION:=1.4.12
+
+
+-include $(TOP)/../RELEASE.local
+-include $(TOP)/configure/RELEASE.local

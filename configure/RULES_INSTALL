@@ -1,0 +1,22 @@
+PHONY: install uninstall src_install src_uninstall src_clean
+
+install: src_install
+
+uninstall: src_uninstall
+
+clean: src_clean
+
+conf:
+	mkdir -p $(CMAKE_BUILD_PATH) && cd $(CMAKE_BUILD_PATH) && cmake -DCMAKE_INSTALL_PREFIX=$(INSTALL_LOCATION_OPEN62541) -DCMAKE_BUILD_RPATH_USE_ORIGIN=ON -DBUILD_SHARED_LIBS=ON ..
+
+src_install:
+	$(QUIET) make -C $(CMAKE_BUILD_PATH) install
+
+src_uninstall:
+	$(QUIET) $(SUDO) rm -rf $(INSTALL_LOCATION_OPEN62541)
+
+src_clean:
+	$(QUIET) make -C $(CMAKE_BUILD_PATH) clean
+
+FORCE:
+
