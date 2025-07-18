@@ -1,6 +1,7 @@
 # OPEN62541 Configuration Environment
 
 [![Debian 12](https://github.com/jeonghanlee/open62541-env/actions/workflows/debian12.yml/badge.svg)](https://github.com/jeonghanlee/open62541-env/actions/workflows/debian12.yml)
+[![Rocky8](https://github.com/jeonghanlee/open62541-env/actions/workflows/rocky8.yml/badge.svg)](https://github.com/jeonghanlee/open62541-env/actions/workflows/rocky8.yml)
 
 An open source implementation of OPC UA (`open62541`) Configuration Environment and its customized application.
 
