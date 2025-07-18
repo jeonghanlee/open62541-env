@@ -22,6 +22,8 @@ By default, everything will be within `${HOME}/open62541` path. It can be custom
 echo "INSTALL_LOCATION=where...." > configure/CONFIG_SITE.local
 ```
 
+This enviornment only build shared library version only.
+
 * Build
 
 ```bash
