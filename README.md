@@ -1,5 +1,7 @@
 # OPEN62541 Configuration Environment
 
+[![Debian 12](https://github.com/jeonghanlee/open62541-env/actions/workflows/debian12.yml/badge.svg)](https://github.com/jeonghanlee/open62541-env/actions/workflows/debian12.yml)
+
 An open source implementation of OPC UA (`open62541`) Configuration Environment and its customized application.
 
 * The source codes are located in <https://github.com/open62541/open62541>
@@ -7,16 +9,6 @@ An open source implementation of OPC UA (`open62541`) Configuration Environment 
 
 ```bash
 sudo apt-get install git build-essential gcc pkg-config cmake python3
-
-# enable additional features
-sudo apt-get install cmake-curses-gui     # for the ccmake graphical interface
-sudo apt-get install libmbedtls-dev       # for encryption support
-sudo apt-get install check libsubunit-dev # for unit tests
-sudo apt-get install libpcap-dev          # for network-replay unit tests
-sudo apt-get install python3-sphinx graphviz  # for documentation generation
-sudo apt-get install python3-sphinx-rtd-theme # documentation style
-sudo apt-get install libavahi-client-dev libavahi-common-dev # for LDS-ME (multicast discovery)
-
 ```
 
 ## About
