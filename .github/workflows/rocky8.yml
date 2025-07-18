@@ -1,5 +1,5 @@
 ---
-name: Rocky8
+name: Rocky8.10
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
     branches: [ master ]
 
 jobs:
-  Rocky9:
+  Rocky8.10:
 
     runs-on: ubuntu-latest
     container: rockylinux/rockylinux:8.10
@@ -25,7 +25,7 @@ jobs:
         dnf -y config-manager --set-enabled powertools
         dnf -y groupinstall "Development tools"
         dnf -y install "epel-release"
-        dnf install -y git gcc pkg-config cmake python3 openssl3 openssl3-devel which cmake tree
+        dnf install -y git gcc pkg-config cmake python3 openssl3 openssl3-devel which cmake tree compat-openssl10
     - name: Setup
       run: |
         make init
