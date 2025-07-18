@@ -20,7 +20,12 @@ jobs:
     - uses: actions/checkout@v3
     - name: Install required packages
       run: |
-        dnf install -y sudo dnf install git gcc pkg-config cmake python3 openssl3 openssl3-devel which cmake tree
+        dnf -y install dnf-plugins-core
+        dnf -y update
+        dnf -y config-manager --set-enabled powertools
+        dnf -y groupinstall "Development tools"
+        dnf -y install "epel-release"
+        dnf install -y git gcc pkg-config cmake python3 openssl3 openssl3-devel which cmake tree
     - name: Setup
       run: |
         make init
