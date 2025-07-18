@@ -24,7 +24,7 @@ This repository helps to build the `open62541` package and its customized applic
 
 ## Commands
 
-By default, everything will be within `/usr/local` path. It can be customized via
+By default, everything will be within `${HOME}/open62541` path. It can be customized via
 
 ```bash
 echo "INSTALL_LOCATION=where...." > configure/CONFIG_SITE.local
@@ -45,5 +45,7 @@ make install
 make uninstall
 make clean
 make distclean
+make exist
+make exist LEVEL=3
 ```
 
