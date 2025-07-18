@@ -1,5 +1,5 @@
 ---
-name: Rocky8.10
+name: Rocky8
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
     branches: [ master ]
 
 jobs:
-  Rocky8.10:
+  Rocky8:
 
     runs-on: ubuntu-latest
     container: rockylinux/rockylinux:8.10
