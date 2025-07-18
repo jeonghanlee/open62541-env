@@ -18,7 +18,7 @@ jobs:
       - name: Install required packages
         run: |
           apt update -y
-          apt install git build-essential gcc pkg-config cmake python3 tree make which
+          apt install -y git build-essential gcc pkg-config cmake python3 tree make which
       - name: Installation
         run: |
           make init
