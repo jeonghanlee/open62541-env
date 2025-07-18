@@ -1,0 +1,31 @@
+name: Debian 12
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  pull_request:
+    branches: [master]
+jobs:
+  Debian12:
+    runs-on: ubuntu-latest
+    container: debian:bookworm-slim
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: Install required packages
+        run: |
+          apt update -y
+          apt install git build-essential gcc pkg-config cmake python3 tree make which
+      - name: Installation
+        run: |
+          make init
+          make conf
+          make build
+          make install
+      - name: Environment Check
+        run: |
+          make vars
+          make exist
