@@ -55,3 +55,5 @@ make exist
 make exist LEVEL=3
 ```
 
+## Reference
+* https://www.open62541.org/doc/master/building.html#main-build-options
