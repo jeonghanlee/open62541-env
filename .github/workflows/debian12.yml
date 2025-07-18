@@ -18,7 +18,7 @@ jobs:
       - name: Install required packages
         run: |
           apt update -y
-          apt install -y git build-essential gcc pkg-config cmake python3 tree make which
+          apt install -y git build-essential gcc pkg-config cmake python3 tree make which libssl-dev libssl3
       - name: Installation
         run: |
           make init

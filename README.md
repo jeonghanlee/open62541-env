@@ -8,7 +8,7 @@ An open source implementation of OPC UA (`open62541`) Configuration Environment 
 * Required packages (Debian and its variants) as follows
 
 ```bash
-sudo apt-get install git build-essential gcc pkg-config cmake python3
+sudo apt-get install git build-essential gcc pkg-config cmake python3 libssl3 libssl-dev
 ```
 
 ## About
