@@ -1,4 +1,4 @@
-INSTALL_LOCATION=${HOME}/$(SRC_NAME)
+INSTALL_LOCATION=/usr/local
 
 # These allow developers to override the CONFIG_SITE variable
 # settings without having to modify the configure/CONFIG_SITE
