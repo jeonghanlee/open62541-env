@@ -58,7 +58,7 @@ make exist LEVEL=3
 ## `github.com/opcua` `INSTALL` option workaround
 
 We should remove `SONAME` within `libopen62541.so` in order to use `OPEN62541_DEPLOY_MODE = INSTALL`.
-Please check the Issue  https://github.com/epics-modules/opcua/issues/190
+Please check the Issue at https://github.com/epics-modules/opcua/issues/190
 
 ```bash
 make init
@@ -68,6 +68,11 @@ make build
 make install
 ```
 
+We can check whether we have `SONAME` or not
+
+```
+readelf -d open62541-src/build/bin/libopen62541.so
+```
 
 ## Reference
 * https://www.open62541.org/doc/master/building.html#main-build-options
