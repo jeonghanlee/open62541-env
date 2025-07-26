@@ -44,4 +44,5 @@ build:
 all: conf build install
 
 github: init conf build install
+	$(QUIET) sudo $(MAKE) install
 
