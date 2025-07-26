@@ -1,11 +1,11 @@
 # hash id is the full length
 define make_p0_patch
 	printf "\nCreating a p0 patch file in $(TOP)/patch\\n";
-	cd $(SRC_PATH) && git diff --no-prefix > $(TOP)/patch/$$(git rev-parse HEAD).p0.patch
+	cd $(SRC_PATH) && git diff --no-prefix > $(TOP)/patch/$(SRC_VERSION).p0.patch
 endef
 
 define patch_src
-for i in $(wildcard $(TOP)/patch/$(SRC_TAG)*.p0.patch); do\
+for i in $(wildcard $(TOP)/patch/$(SRC_VERSION).p0.patch); do\
 	printf "\nPatching %s with the file : %s\n" "$(SRC_PATH)" "$$i";\
 	patch -d $(SRC_PATH) --ignore-whitespace -p0 < $$i;\
 done
@@ -13,7 +13,7 @@ endef
 
 
 define revert_patch_src
-for i in $(wildcard $(TOP)/patch/$(SRC_TAG)*.p0.patch); do\
+for i in $(wildcard $(TOP)/patch/$(SRC_VERSION).p0.patch); do\
 	printf "\nReverting applied patch %s with the file : %s\n" "$(SRC_PATH)" "$$i";\
 	patch -R -d $(SRC_PATH) --ignore-whitespace -p0 < $$i;\
 done
@@ -31,7 +31,7 @@ endef
 
 # it may be useful for git with older than 1.8.5, which doesn't have -C option.
 define gitclone2
-	git clone  $(1) $(2) 
+	git clone  $(1) $(2)
 	cd $(2) && git checkout $(3)
 endef
 

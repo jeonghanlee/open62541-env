@@ -1,0 +1,12 @@
+diff --git CMakeLists.txt CMakeLists.txt
+index 002efecb7..145f895d9 100644
+--- CMakeLists.txt
++++ CMakeLists.txt
+@@ -1497,6 +1497,7 @@ add_dependencies(open62541-object open62541-code-generation)
+ 
+ # Ensure that the open62541::open62541 alias can be used inside open62541's build
+ add_library(open62541::open62541 ALIAS open62541)
++set_target_properties(open62541 PROPERTIES NO_SONAME TRUE)
+ 
+ # Export Symbols
+ target_compile_definitions(open62541-object PRIVATE -DUA_DYNAMIC_LINKING_EXPORT)
