@@ -55,6 +55,11 @@ make exist
 make exist LEVEL=3
 ```
 
+## Redhat variant OS
+
+The default makefile rule installs all library files within `CMAKE_INSTALL_PREFIX/lib64`. This creates a cumbersome situation because we then have to link these libraries within the ALS-U EPICS environment.
+Therefore, within this environment, we are forced to use `CMAKE_INSTALL_PREFIX/lib` instead. If you intend to use this environment with a Red Hat variant OS, please ensure that the installation location `lib` is compatible.
+
 ## `github.com/opcua` `INSTALL` option workaround
 
 We should remove `SONAME` within `libopen62541.so` in order to use `OPEN62541_DEPLOY_MODE = INSTALL`.
