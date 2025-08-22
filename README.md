@@ -45,6 +45,19 @@ make build
 make install
 ```
 
+* Build on Rocky 8 or Red Hat Variant
+
+Even if their compiler and linker is indeed very mordern, Red Hat made a choice to build their binutils packages to default to the order `RPATH` instead of `RUNPATH`. So we have to enable it by using the red hat specific configuration option.
+
+
+```bash
+make init
+make conf.rocky8
+make build
+make install
+```
+
+
 * Others
 
 ```bash
