@@ -28,7 +28,7 @@ jobs:
     - name: Setup
       run: |
         make init
-        make conf
+        make conf.rocky8
         make build
         make install
     - name: Environment Check
