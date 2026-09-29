@@ -57,6 +57,19 @@ make build
 make install
 ```
 
+* Build on Rocky 10
+
+`conf.rocky10` calls the same configuration recipe as `conf.rocky8`. Both
+targets retain the Red Hat linker settings and the configured installation
+prefix. Existing calls to `conf.rocky8` remain supported.
+
+```bash
+make init
+make conf.rocky10
+make build
+make install
+```
+
 
 * Others
 

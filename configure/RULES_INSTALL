@@ -1,4 +1,4 @@
-.PHONY: install uninstall clean src_install src_uninstall src_clean conf.rocky8 conf conf.static
+.PHONY: install uninstall clean src_install src_uninstall src_clean conf.rocky8 conf.rocky10 conf conf.static
 
 install: src_install
 
@@ -8,6 +8,8 @@ clean: src_clean
 
 ## Redhat variant will install the shared library files into `lib64` instead of `lib`
 ## We will typically install it within the ALS-U EPICS environment, so we are okay to set CMAKE_INSTALL_LIBDIR to `lib`.
+
+conf.rocky10: conf.rocky8
 
 conf.rocky8:
 	mkdir -p $(CMAKE_BUILD_PATH) && cd $(CMAKE_BUILD_PATH) && cmake -DCMAKE_INSTALL_PREFIX=$(INSTALL_LOCATION_OPEN62541) -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUA_ENABLE_ENCRYPTION=OPENSSL -DBUILD_SHARED_LIBS=ON -DCMAKE_SHARED_LINKER_FLAGS="-Wl,--enable-new-dtags -Wl,-rpath,\$$ORIGIN/." -DCMAKE_INSTALL_LIBDIR=lib ..
