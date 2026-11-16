@@ -28,7 +28,7 @@ This repository helps to build the `open62541` package and its customized applic
 
 ## Commands
 
-By default, everything will be within `${HOME}/open62541` path. It can be customized via
+By default, everything will be within `/usr/local` path. It can be customized via
 
 ```bash
 echo "INSTALL_LOCATION=where...." > configure/CONFIG_SITE.local
@@ -80,6 +80,8 @@ make distclean
 make exist
 make exist LEVEL=3
 ```
+
+`make uninstall` removes exactly the files listed in `open62541-src/build/install_manifest.txt`, which `make install` writes. They are removed from the installation prefix that `make conf` stored in `open62541-src/build/CMakeCache.txt`; an `INSTALL_LOCATION` given to `make uninstall` is not used. Directories that become empty are removed; every other file in that prefix is kept. The target does not call `sudo`; run it with the rights that this prefix requires. Run it before `make distclean`, which removes the source directory `open62541-src` together with the manifest; without the manifest `make uninstall` prints a notice and removes nothing.
 
 ## Redhat variant OS
 

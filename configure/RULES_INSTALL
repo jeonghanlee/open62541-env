@@ -24,7 +24,7 @@ src_install:
 	$(QUIET) make -C $(CMAKE_BUILD_PATH) install
 
 src_uninstall:
-	$(QUIET) $(SUDO) rm -rf $(INSTALL_LOCATION_OPEN62541)
+	$(QUIET) bash scripts/uninstall-manifest.bash "$(CMAKE_BUILD_PATH)"
 
 src_clean:
 	$(QUIET) make -C $(CMAKE_BUILD_PATH) clean

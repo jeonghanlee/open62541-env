@@ -50,3 +50,6 @@ env-template/
 *.swp
 *share/
 .DS_Store
+
+# Local scratch area of the working checkout
+/work/
