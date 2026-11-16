@@ -1,5 +1,10 @@
 INSTALL_LOCATION=/usr/local
 
+# Additional cmake options appended to every conf target. The default builds the
+# library that opcua-server-sim needs: the NodeSet loader, the full namespace
+# zero, and the Alarms and Conditions support.
+CMAKE_EXTRA_OPTIONS=-DUA_ENABLE_NODESETLOADER=ON -DUA_NAMESPACE_ZERO=FULL -DUA_ENABLE_SUBSCRIPTIONS_ALARMS_CONDITIONS=ON
+
 # These allow developers to override the CONFIG_SITE variable
 # settings without having to modify the configure/CONFIG_SITE
 # file itself.
