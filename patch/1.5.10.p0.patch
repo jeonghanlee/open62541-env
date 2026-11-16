@@ -1,0 +1,159 @@
+diff --git deps/nodesetLoader/backends/open62541/src/DataTypeImporter.c deps/nodesetLoader/backends/open62541/src/DataTypeImporter.c
+index 194282b..805b604 100644
+--- deps/nodesetLoader/backends/open62541/src/DataTypeImporter.c
++++ deps/nodesetLoader/backends/open62541/src/DataTypeImporter.c
+@@ -148,7 +148,6 @@ StructureDataType_init(AddNodeContext *ctx, UA_DataType *type,
+     } else {
+         type->typeKind = UA_DATATYPEKIND_STRUCTURE;
+     }
+-    type->typeId = node->id;
+     type->pointerFree = true; // Gets overridden if necessary
+     type->overlayable = false;
+     return addDataTypeMembers(ctx, type, node, parent);
+@@ -231,10 +230,9 @@ addCustomDataType(AddNodeContext *ctx, const NL_DataTypeNode *node) {
+     type.typeName = (char *)calloc(len + 1, sizeof(char));
+     memcpy((void*)(uintptr_t)type.typeName, node->browseName.name.data, len);
+ 
+-    UA_NodeId tmp = getBinaryEncodingId(node);
+-    UA_NodeId_copy(&tmp, &type.binaryEncodingId);
+-    tmp = getXmlEncodingId(node);
+-    UA_NodeId_copy(&tmp, &type.xmlEncodingId);
++    // The lookups return copies; the type takes ownership of them.
++    type.binaryEncodingId = getBinaryEncodingId(node);
++    type.xmlEncodingId = getXmlEncodingId(node);
+ 
+     UA_StatusCode res;
+     UA_ExtensionObject eo;
+diff --git deps/nodesetLoader/backends/open62541/src/import.c deps/nodesetLoader/backends/open62541/src/import.c
+index 46b95b3..346b24d 100644
+--- deps/nodesetLoader/backends/open62541/src/import.c
++++ deps/nodesetLoader/backends/open62541/src/import.c
+@@ -270,6 +270,13 @@ handleVariableNode(const NL_VariableNode *node, UA_NodeId *id,
+ 
+     UA_NodeId typeDefId = getTypeDefId((const NL_Node*)node);
+ 
++    // BaseVariableType is abstract and cannot type a Variable instance.
++    // NodeSets exported by engineering tools use it for structure arrays;
++    // BaseDataVariableType is its concrete subtype.
++    const UA_NodeId baseVariableType = UA_NS0ID(BASEVARIABLETYPE);
++    if(UA_NodeId_equal(&typeDefId, &baseVariableType))
++        typeDefId = UA_NS0ID(BASEDATAVARIABLETYPE);
++
+     //value is copied by open62541
+     ret = UA_Server_addNode_begin(server, UA_NODECLASS_VARIABLE, *id, *parentId,
+                                   *parentReferenceId, *qn, typeDefId, &attr,
+diff --git deps/nodesetLoader/src/AliasList.c deps/nodesetLoader/src/AliasList.c
+index f187ad6..8aa9038 100644
+--- deps/nodesetLoader/src/AliasList.c
++++ deps/nodesetLoader/src/AliasList.c
+@@ -59,6 +59,8 @@ const UA_NodeId *
+ 
+ void AliasList_delete(AliasList *list)
+ {
++    for(Alias *alias = list->data; alias != list->data + list->size; alias++)
++        UA_NodeId_clear(&alias->id);
+     free(list->data);
+     free(list);
+ }
+diff --git deps/nodesetLoader/src/Node.c deps/nodesetLoader/src/Node.c
+index bec6b15..3ebd712 100644
+--- deps/nodesetLoader/src/Node.c
++++ deps/nodesetLoader/src/Node.c
+@@ -103,9 +103,16 @@ Node_delete(NL_Node *node) {
+         UA_NodeId_clear(&varNode->datatype);
+     }
+ 
++    if(node->nodeClass == NODECLASS_VARIABLETYPE) {
++        NL_VariableTypeNode* varTypeNode = (NL_VariableTypeNode*)node;
++        UA_NodeId_clear(&varTypeNode->datatype);
++    }
++
+     if(node->nodeClass==NODECLASS_DATATYPE) {
+         NL_DataTypeNode *dtNode = (NL_DataTypeNode *)node;
+         if(dtNode->definition) {
++            for(size_t i = 0; i < dtNode->definition->fieldCnt; i++)
++                UA_NodeId_clear(&dtNode->definition->fields[i].dataType);
+             free(dtNode->definition->fields);
+             free(dtNode->definition);
+         }
+diff --git deps/nodesetLoader/src/Nodeset.c deps/nodesetLoader/src/Nodeset.c
+index f91e5f5..36b29aa 100644
+--- deps/nodesetLoader/src/Nodeset.c
++++ deps/nodesetLoader/src/Nodeset.c
+@@ -72,8 +72,9 @@ parseNodeId(const Nodeset *nodeset, char *s) {
+ static UA_QualifiedName
+ parseQualifiedName(const Nodeset *nodeset, char *s) {
+     UA_QualifiedName qn;
++    // The parser maps the namespace index of the NodeSet to the server;
++    // mapping it a second time yields an index the server does not have.
+     UA_QualifiedName_parseEx(&qn, UA_STRING(s), nodeset->fc->nsMapping);
+-    qn.namespaceIndex = UA_NamespaceMapping_remote2Local(nodeset->fc->nsMapping, qn.namespaceIndex);
+     return qn;
+ }
+ 
+@@ -82,7 +83,11 @@ alias2Id(const Nodeset *nodeset, char *name) {
+     const UA_NodeId *alias = AliasList_getNodeId(nodeset->aliasList, name);
+     if(!alias)
+         return parseNodeId(nodeset, name);
+-    return *alias;
++    // Every caller owns and clears the returned NodeId. A string NodeId
++    // behind an alias must not be shared between them.
++    UA_NodeId id;
++    UA_NodeId_copy(alias, &id);
++    return id;
+ }
+ 
+ Nodeset *
+@@ -135,6 +140,7 @@ Nodeset_findByNodeId(Nodeset *nodeset, const UA_NodeId *key) {
+ }
+ 
+ static UA_NodeId hasTypeDef = {0, UA_NODEIDTYPE_NUMERIC, {40}};
++static UA_NodeId hasEncoding = {0, UA_NODEIDTYPE_NUMERIC, {38}};
+ 
+ static bool
+ nodeRefsReady(NL_Node *node) {
+@@ -194,6 +200,28 @@ bool Nodeset_sort(Nodeset *nodeset) {
+         }
+     }
+ 
++    // A NodeSet may declare HasEncoding only as an inverse reference on the
++    // encoding object. Mirror it as a forward reference on the DataType node,
++    // where the DataType import looks up its encoding ids.
++    for(size_t i = 0; i < nodeset->allNodes.size; i++) {
++        NL_Node *node = nodeset->allNodes.nodes[i];
++        for(NL_Reference *ref = node->refs; ref != NULL; ref = ref->next) {
++            if(ref->isForward || !ref->targetPtr ||
++               ref->targetPtr->nodeClass != NODECLASS_DATATYPE ||
++               !UA_NodeId_equal(&hasEncoding, &ref->refType))
++                continue;
++            NL_Reference *mirror = (NL_Reference *)calloc(1, sizeof(NL_Reference));
++            if(!mirror)
++                continue;
++            mirror->isForward = true;
++            mirror->refType = hasEncoding;
++            UA_NodeId_copy(&node->id, &mirror->target);
++            mirror->targetPtr = node;
++            mirror->next = ref->targetPtr->refs;
++            ref->targetPtr->refs = mirror;
++        }
++    }
++
+     // Add ReferenceTypes
+     bool done = Nodeset_sortNodeClass(nodeset, NODECLASS_REFERENCETYPE);
+     if(!done) {
+@@ -518,11 +546,11 @@ bool
+ Nodeset_forEachNode(Nodeset *nodeset, void *context,
+                     NodesetLoader_forEachNode_Func fn) {
+     NodeContainer *c = &nodeset->sortedNodes;
++    bool allGood = true;
+     for(size_t i = 0; i < c->size; i++) {
+         NL_Node *node = c->nodes[i];
+-        bool res = fn(context, node);
+-        if(!res)
+-            return false;
++        if(!fn(context, node))
++            allGood = false;
+     }
+-    return true;
++    return allGood;
+ }
