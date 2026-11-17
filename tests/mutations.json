@@ -1,0 +1,237 @@
+{
+ "mutations": [
+  {
+   "id": "M01",
+   "file": "scripts/uninstall-manifest.bash",
+   "old": "rm -f -- \"${line}\"",
+   "new": ": \"${line}\"",
+   "intended": [
+    "only the other package's files and their directories remain",
+    "the library at the configured prefix is removed",
+    "the library is still removed"
+   ],
+   "also": [
+    "a second uninstall removes nothing"
+   ]
+  },
+  {
+   "id": "M02",
+   "file": "scripts/uninstall-manifest.bash",
+   "old": "if below_symlinked_dir \"${line}\" \"${prefix}\"; then",
+   "new": "if false; then",
+   "intended": [
+    "a file below a symlinked directory is kept"
+   ],
+   "also": [
+    "the skipped entries are counted"
+   ]
+  },
+  {
+   "id": "M03",
+   "file": "scripts/uninstall-manifest.bash",
+   "old": "if [[ \"${line}\" != \"${prefix}\"/* || \"${line}\" == *\"/../\"* ]]; then",
+   "new": "if false; then",
+   "intended": [
+    "a file outside the prefix is kept"
+   ],
+   "also": [
+    "the skipped entries are counted"
+   ]
+  },
+  {
+   "id": "M04",
+   "file": "scripts/uninstall-manifest.bash",
+   "old": "rmdir \"${dir}/__pycache__\" 2>/dev/null || true",
+   "new": "true",
+   "intended": [
+    "only the other package's files and their directories remain"
+   ],
+   "also": []
+  },
+  {
+   "id": "M05",
+   "file": "scripts/uninstall-manifest.bash",
+   "old": "rm -f -- \"${record}\"",
+   "new": ": \"${record}\"",
+   "intended": [
+    "the .buildid record is removed",
+    "the .source record is removed",
+    "cfg is removed when the records were its only content"
+   ],
+   "also": []
+  },
+  {
+   "id": "M06",
+   "file": "configure/RULES_INSTALL",
+   "old": "bash scripts/uninstall-manifest.bash \"$(CMAKE_BUILD_PATH)\"",
+   "new": "bash scripts/uninstall-manifest.bash \"$(CMAKE_BUILD_PATH)\" \"open62541-env\"",
+   "intended": [
+    "make uninstall passes no record name and keeps a record file"
+   ],
+   "also": []
+  },
+  {
+   "id": "M07",
+   "file": "scripts/uninstall-manifest.bash",
+   "old": "\"notice: ${cache} does not exist; nothing was removed\"\n        return 0",
+   "new": "\"notice: ${cache} does not exist; nothing was removed\"\n        return 1",
+   "intended": [
+    "uninstall without a build directory exits 0"
+   ],
+   "also": []
+  },
+  {
+   "id": "M08",
+   "file": "configure/RULES_FUNC",
+   "old": "$(REVERT_PATCH) --no-backup-if-mismatch \"$(SRC_PATH)\" \"$$i\" || exit 1;\\",
+   "new": "patch -R -d $(SRC_PATH) --ignore-whitespace -p0 < $$i || exit 1;\\",
+   "intended": [
+    "revert on a clean source exits 0",
+    "revert on a clean source skips",
+    "a second revert exits 0",
+    "a second revert skips"
+   ],
+   "also": [
+    "a second apply leaves no reject or backup file"
+   ]
+  },
+  {
+   "id": "M09",
+   "file": "configure/RULES_FUNC",
+   "old": "|| printf \"%s\\n\" \"No patch file for version $(SRC_VERSION): nothing to apply\"",
+   "new": "|| true",
+   "intended": [
+    "apply without a patch file prints a notice"
+   ],
+   "also": []
+  },
+  {
+   "id": "M10",
+   "file": "configure/RULES_FUNC",
+   "old": "$(APPLY_PATCH) apply \"$(SRC_PATH)\" \"$$i\" || exit 1;\\",
+   "new": "$(APPLY_PATCH) apply \"$(SRC_PATH)\" \"$$i\" || true;\\",
+   "intended": [
+    "an unclassifiable state makes apply exit 2",
+    "apply without a source directory exits 2"
+   ],
+   "also": []
+  },
+  {
+   "id": "M11",
+   "file": "scripts/apply_patch.bash",
+   "old": "printf 'Already applied: %s\\n' \"${detail}\"",
+   "new": "printf 'Applied before: %s\\n' \"${detail}\"",
+   "intended": [
+    "a second apply says so",
+    "apply_patch.bash.source records the digest of the copy"
+   ],
+   "also": []
+  },
+  {
+   "id": "M12",
+   "file": "configure/RULES_INSTALL",
+   "old": "-DCMAKE_SHARED_LINKER_FLAGS=\"-Wl,-rpath,\\$$ORIGIN/.\" -DCMAKE_INSTALL_LIBDIR=lib $(CMAKE_EXTRA_OPTIONS) ..",
+   "new": "-DCMAKE_SHARED_LINKER_FLAGS=\"-Wl,-rpath,\\$$ORIGIN/.\" -DCMAKE_INSTALL_LIBDIR=lib ..",
+   "intended": [
+    "conf with an extra option",
+    "CONFIG_SITE.local sets the extra options",
+    "conf without extra options ends in the old command"
+   ],
+   "also": []
+  },
+  {
+   "id": "M13",
+   "file": "scripts/uninstall-manifest.bash",
+   "old": "if [[ \"${skipped}\" -gt 0 ]]; then",
+   "new": "if false; then",
+   "intended": [
+    "entries outside the prefix or below a symlink make uninstall exit 2",
+    "a symlinked cfg makes uninstall exit 1"
+   ],
+   "also": [
+    "the skipped entries are counted"
+   ]
+  },
+  {
+   "id": "M14",
+   "file": "scripts/uninstall-manifest.bash",
+   "old": "[[ -n \"${prefix}\" ]] || die \"CMAKE_INSTALL_PREFIX is empty in ${cache}\"",
+   "new": "true",
+   "intended": [
+    "an empty install prefix is named"
+   ],
+   "also": []
+  },
+  {
+   "id": "M15",
+   "file": "scripts/uninstall-manifest.bash",
+   "old": "[[ -n \"${prefix}\" ]] || die \"install prefix must not be the filesystem root\"",
+   "new": "true",
+   "intended": [
+    "the filesystem root as prefix is refused"
+   ],
+   "also": []
+  },
+  {
+   "id": "M16",
+   "file": "scripts/uninstall-manifest.bash",
+   "old": "[[ -n \"${build}\" ]] || die \"usage: $0 <cmake-build-dir> [<record-name>]\"",
+   "new": "true",
+   "intended": [
+    "a call without arguments exits 1"
+   ],
+   "also": []
+  },
+  {
+   "id": "M17",
+   "file": "scripts/uninstall-manifest.bash",
+   "old": "\"notice: ${manifest} does not exist; nothing was removed\"\n        return 0",
+   "new": "\"notice: ${manifest} does not exist; nothing was removed\"\n        return 1",
+   "intended": [
+    "a cache without a manifest exits 0"
+   ],
+   "also": []
+  },
+  {
+   "id": "M18",
+   "file": "scripts/uninstall-manifest.bash",
+   "old": "if below_symlinked_dir \"${record}\" \"${prefix}\"; then",
+   "new": "if false; then",
+   "intended": [
+    "a symlinked cfg makes uninstall exit 1",
+    "a record below a symlinked cfg is kept"
+   ],
+   "also": []
+  },
+  {
+   "id": "M19",
+   "file": "configure/RULES_FUNC",
+   "old": "$(APPLY_PATCH) apply \"$(SRC_PATH)\" \"$$i\" || exit 1;\\",
+   "new": "true;\\",
+   "intended": [
+    "apply adds the patched line",
+    "an unclassifiable state is named",
+    "apply without a source directory says so"
+   ],
+   "also": [
+    "a second apply says so",
+    "an unclassifiable state makes apply exit 2",
+    "apply without a source directory exits 2"
+   ]
+  },
+  {
+   "id": "M20",
+   "file": "configure/RULES_FUNC",
+   "old": "$(REVERT_PATCH) --no-backup-if-mismatch \"$(SRC_PATH)\" \"$$i\" || exit 1;\\",
+   "new": "true;\\",
+   "intended": [
+    "revert removes the patched line",
+    "the source equals the upstream file again"
+   ],
+   "also": [
+    "revert on a clean source skips",
+    "a second revert skips"
+   ]
+  }
+ ]
+}
