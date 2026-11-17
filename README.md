@@ -19,7 +19,7 @@ sudo apt install git build-essential gcc pkg-config cmake python3 libssl3 libssl
 * Redhat and its variants
 
 ```bash
-sudo dnf install git gcc pkg-config cmake python3 openssl3 openssl3-devel compat-openssl10
+sudo dnf install git gcc pkg-config cmake python3 patch openssl3 openssl3-devel compat-openssl10
 
 ```
 
