@@ -3,12 +3,12 @@ name: Rocky8
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, '1.5' ]
     paths-ignores:
       - '*.md'
 
   pull_request:
-    branches: [ master ]
+    branches: [ master, '1.5' ]
 
 jobs:
   Rocky8:
@@ -28,6 +28,7 @@ jobs:
     - name: Setup
       run: |
         make init
+        make patch.apply
         make conf.rocky8
         make build
         make install
