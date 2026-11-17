@@ -34,6 +34,8 @@ By default, everything will be within `/usr/local` path. It can be customized vi
 echo "INSTALL_LOCATION=where...." > configure/CONFIG_SITE.local
 ```
 
+Additional cmake options reach every conf target (`conf`, `conf.rocky8`, `conf.rocky10` and `conf.static`) through `CMAKE_EXTRA_OPTIONS`, which is empty by default, for example `make conf CMAKE_EXTRA_OPTIONS=-DUA_ENABLE_AMALGAMATION=OFF`. cmake keeps the options in `open62541-src/build/CMakeCache.txt`, so a value given once stays in effect for later `make conf` runs; give a new value to change it, or run `make distclean` and `make init` to start without it. cmake does not reject an option name it does not know: it stores the value as given, so check the name in `CMakeCache.txt`.
+
 This enviornment only build shared library version only.
 
 * Build
@@ -100,6 +102,10 @@ make conf
 make build
 make install
 ```
+
+Run `make patch.apply` after `make init` and before `make conf`. Both `make patch.apply` and `make patch.revert` classify the patch with `patch --dry-run` before they change anything, so either can run again at any time: `make patch.apply` applies an unapplied patch and, for an applied patch, says so and changes nothing; `make patch.revert` reverses an applied patch and skips an unapplied one. A state that is neither, for example a partly applied patch, stops with an error and changes nothing; `make distclean` followed by `make init` starts from a clean source. When no patch file `patch/<SRC_VERSION>.p0.patch` exists for the version, both targets print a notice and change nothing.
+
+`make patch.apply` and `make patch.revert` run `scripts/apply_patch.bash` and `scripts/revert_patch.bash`, copies of the apply and revert tools of the `patch` skill, which the dev-env repository (https://github.com/jeonghanlee/dev-env) holds under `shared/skills/patch`. `scripts/apply_patch.bash.source` and `scripts/revert_patch.bash.source` record the commit and the digest each copy was taken from. Do not edit a copy; a change of a tool is proposed to the owner of the dev-env repository, which holds the originals.
 
 We can check whether we have `SONAME` or not
 

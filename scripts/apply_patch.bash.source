@@ -1,0 +1,21 @@
+Original: shared/skills/patch/scripts/apply_patch.bash
+Skill commit: 2ef69e762789ce906788188dde1247398c8948ac
+sha256: af93c7a8a9692b0907efcad1b42dbcdaa61ce744b43b36739abdb3918906832d
+Copied on: 2026-11-16
+Skill: skill patch of the dev-env repository, https://github.com/jeonghanlee/dev-env
+  (a copy of the file, taken from a clean checkout; no line was added)
+Needs: bash and patch
+Use: the patch_src macro of configure/RULES_FUNC calls
+  bash scripts/apply_patch.bash apply <source> <patch>
+Exit status of the tool: 0 done or already applied, 1 check found the patch not
+  applied or patch failed while applying, 2 usage or input error, 3 the state
+  cannot be classified. make reports a failing rule as exit status 2.
+Licence: the file carries the owner's header (Copyright (c) 2026 - Jeong Han Lee;
+  GNU General Public License, either version 2 of the License, or any newer
+  version), the same wording as the header of the top-level Makefile of this
+  repository.
+Comparison: bash <skill directory>/scripts/check-copy.bash with this repository
+  as the current directory; <skill directory> is shared/skills/patch of the
+  dev-env repository. Do not edit this copy; a needed change is proposed to
+  the owner of the dev-env repository, who announces changes of the tool to the
+  holders of a copy.
