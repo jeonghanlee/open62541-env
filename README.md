@@ -19,7 +19,7 @@ sudo apt install git build-essential gcc pkg-config cmake python3 libssl3 libssl
 * Redhat and its variants
 
 ```bash
-sudo dnf install git gcc pkg-config cmake python3 openssl3 openssl3-devel compat-openssl10
+sudo dnf install git gcc pkg-config cmake python3 patch openssl3 openssl3-devel compat-openssl10
 
 ```
 
@@ -34,12 +34,17 @@ By default, everything will be within `/usr/local` path. It can be customized vi
 echo "INSTALL_LOCATION=where...." > configure/CONFIG_SITE.local
 ```
 
+Additional cmake options reach every conf target (`conf`, `conf.rocky8`, `conf.rocky10` and `conf.static`) through `CMAKE_EXTRA_OPTIONS`. On this branch its default is `-DUA_ENABLE_NODESETLOADER=ON -DUA_NAMESPACE_ZERO=FULL -DUA_ENABLE_SUBSCRIPTIONS_ALARMS_CONDITIONS=ON`. A value given on the command line replaces the whole default, for example `make conf CMAKE_EXTRA_OPTIONS="-DUA_ENABLE_NODESETLOADER=ON -DUA_NAMESPACE_ZERO=FULL -DUA_ENABLE_SUBSCRIPTIONS_ALARMS_CONDITIONS=ON -DUA_ENABLE_AMALGAMATION=OFF"`, so repeat the options of the default that you keep. cmake keeps the options in `open62541-src/build/CMakeCache.txt`, so a value given once stays in effect for later `make conf` runs; give a new value to change it, or run `make distclean` and `make init` to start without it. cmake does not reject an option name it does not know: it stores the value as given, so check the name in `CMakeCache.txt`.
+
+The branch `1.5` builds open62541 1.5.10 for [`opcua-server-sim`](https://github.com/jeonghanlee/opcua-server-sim), an OPC UA server that imitates a Siemens S7-1500 controller. The patch `patch/1.5.10.p0.patch` is required on this branch: a library built without it does not run the server. The same patch removes the `SONAME` of `libopen62541.so`, so the installation holds the single file `libopen62541.so` and no versioned file. The name `1.5` belongs to the branch only. No tag with this name exists or is created, because a tag of the same name would make the name ambiguous for git.
+
 This enviornment only build shared library version only.
 
 * Build
 
 ```bash
 make init
+make patch.apply
 make conf
 make build
 make install
@@ -52,6 +57,7 @@ Even if their compiler and linker is indeed very mordern, Red Hat made a choice 
 
 ```bash
 make init
+make patch.apply
 make conf.rocky8
 make build
 make install
@@ -65,6 +71,7 @@ prefix. Existing calls to `conf.rocky8` remain supported.
 
 ```bash
 make init
+make patch.apply
 make conf.rocky10
 make build
 make install
@@ -100,6 +107,10 @@ make conf
 make build
 make install
 ```
+
+Run `make patch.apply` after `make init` and before `make conf`. Both `make patch.apply` and `make patch.revert` classify the patch with `patch --dry-run` before they change anything, so either can run again at any time: `make patch.apply` applies an unapplied patch and, for an applied patch, says so and changes nothing; `make patch.revert` reverses an applied patch and skips an unapplied one. A state that is neither, for example a partly applied patch, stops with an error and changes nothing; `make distclean` followed by `make init` starts from a clean source. When no patch file `patch/<SRC_VERSION>.p0.patch` exists for the version, both targets print a notice and change nothing.
+
+`make patch.apply` and `make patch.revert` run `scripts/apply_patch.bash` and `scripts/revert_patch.bash`, copies of the apply and revert tools of the `patch` skill, which the dev-env repository (https://github.com/jeonghanlee/dev-env) holds under `shared/skills/patch`. `scripts/apply_patch.bash.source` and `scripts/revert_patch.bash.source` record the commit and the digest each copy was taken from. Do not edit a copy; a change of a tool is proposed to the owner of the dev-env repository, which holds the originals.
 
 We can check whether we have `SONAME` or not
 
