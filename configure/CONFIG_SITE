@@ -1,5 +1,9 @@
 INSTALL_LOCATION=/usr/local
 
+# Additional cmake options appended to every conf target, for example
+# CMAKE_EXTRA_OPTIONS=-DUA_ENABLE_NODESETLOADER=ON
+CMAKE_EXTRA_OPTIONS=
+
 # These allow developers to override the CONFIG_SITE variable
 # settings without having to modify the configure/CONFIG_SITE
 # file itself.
