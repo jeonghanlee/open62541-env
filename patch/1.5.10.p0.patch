@@ -1,3 +1,15 @@
+diff --git CMakeLists.txt CMakeLists.txt
+index d635a0248..a35e14fb3 100644
+--- CMakeLists.txt
++++ CMakeLists.txt
+@@ -1584,6 +1584,7 @@ endif()
+ 
+ # Ensure that the open62541::open62541 alias can be used inside open62541's build
+ add_library(open62541::open62541 ALIAS open62541)
++set_target_properties(open62541 PROPERTIES NO_SONAME TRUE)
+ 
+ # Export public symbols during build
+ target_compile_definitions(open62541-object PRIVATE -DUA_DYNAMIC_LINKING_EXPORT)
 diff --git deps/nodesetLoader/backends/open62541/src/DataTypeImporter.c deps/nodesetLoader/backends/open62541/src/DataTypeImporter.c
 index 194282b..805b604 100644
 --- deps/nodesetLoader/backends/open62541/src/DataTypeImporter.c
