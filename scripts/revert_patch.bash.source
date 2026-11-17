@@ -1,0 +1,25 @@
+Original: shared/skills/patch/scripts/revert_patch.bash
+Skill commit: f35c7754ebac24c4dc2837177a59b82cd0403bdd
+sha256: a327a96e6a567e1189c8c5b492b7299816457d598cc44e1caa0f6d6222ae5276
+Copied on: 2026-11-17
+Skill: skill patch of the dev-env repository, https://github.com/jeonghanlee/dev-env
+  (a copy of the file, taken from a clean checkout; no line was added)
+Needs: bash and patch
+Use: the revert_patch_src macro of configure/RULES_FUNC calls
+  bash scripts/revert_patch.bash --no-backup-if-mismatch <source> <patch>
+Exit status of the tool: 0 reversed or already unapplied, 1 patch failed while
+  reversing, 2 usage or input error, 3 the state cannot be classified. make
+  reports a failing rule as exit status 2.
+Limit stated in the skill: for a single-file, single-hunk patch of a static C
+  function that changes only the last body line, a second revert on an unapplied
+  state is not safe. The patch of this repository changes six files (CMakeLists.txt
+  and five files below deps/nodesetLoader) and is not such a patch.
+Licence: the file carries the owner's header (Copyright (c) 2026 - Jeong Han Lee;
+  GNU General Public License, either version 2 of the License, or any newer
+  version), the same wording as the header of the top-level Makefile of this
+  repository.
+Comparison: bash <skill directory>/scripts/check-copy.bash with this repository
+  as the current directory; <skill directory> is shared/skills/patch of the
+  dev-env repository. Do not edit this copy; a needed change is proposed to
+  the owner of the dev-env repository, who announces changes of the tool to the
+  holders of a copy.

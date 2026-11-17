@@ -1,3 +1,6 @@
+APPLY_PATCH = bash "$(TOP)/scripts/apply_patch.bash"
+REVERT_PATCH = bash "$(TOP)/scripts/revert_patch.bash"
+
 # hash id is the full length
 define make_p0_patch
 	printf "\nCreating a p0 patch file in $(TOP)/patch\\n";
@@ -5,17 +8,17 @@ define make_p0_patch
 endef
 
 define patch_src
+test -n "$(wildcard $(TOP)/patch/$(SRC_VERSION).p0.patch)" || printf "%s\n" "No patch file for version $(SRC_VERSION): nothing to apply";\
 for i in $(wildcard $(TOP)/patch/$(SRC_VERSION).p0.patch); do\
-	printf "\nPatching %s with the file : %s\n" "$(SRC_PATH)" "$$i";\
-	patch -d $(SRC_PATH) --ignore-whitespace -p0 < $$i;\
+	$(APPLY_PATCH) apply "$(SRC_PATH)" "$$i" || exit 1;\
 done
 endef
 
 
 define revert_patch_src
+test -n "$(wildcard $(TOP)/patch/$(SRC_VERSION).p0.patch)" || printf "%s\n" "No patch file for version $(SRC_VERSION): nothing to revert";\
 for i in $(wildcard $(TOP)/patch/$(SRC_VERSION).p0.patch); do\
-	printf "\nReverting applied patch %s with the file : %s\n" "$(SRC_PATH)" "$$i";\
-	patch -R -d $(SRC_PATH) --ignore-whitespace -p0 < $$i;\
+	$(REVERT_PATCH) --no-backup-if-mismatch "$(SRC_PATH)" "$$i" || exit 1;\
 done
 endef
 
