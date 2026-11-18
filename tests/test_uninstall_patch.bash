@@ -9,14 +9,17 @@
 #   patch      make patch.apply and make patch.revert on the CMakeLists.txt of the
 #              pinned upstream clone (open62541-src); reported Incomplete when
 #              that clone is absent or not at the pinned tag
+#   record     scripts/vendor-record.bash through make install and directly: the
+#              build-record and its digest file for the installed shared objects
 #   options    make -n conf, conf.rocky8 and conf.static with and without
 #              CMAKE_EXTRA_OPTIONS, and the digests recorded in the .source files
 #
 # Usage: tests/test_uninstall_patch.bash
 # Needs: bash (run with 5.2; older versions are not tested), git, make, cmake, a C
-# compiler, patch, and the GNU versions of cp, sed, find, xargs and sha256sum (the
-# setup uses cp --parents -t and sed -i). Run it from a git work tree whose files
-# are tracked: the copy takes the files that git ls-files lists.
+# compiler, patch, readelf, and the GNU versions of cp, sed, find, xargs and
+# sha256sum (the setup uses cp --parents -t and sed -i). Run it from a git work
+# tree: the copy takes the tracked files and the untracked files that git does not
+# ignore.
 # Runs as a normal user, needs no network, and writes only below work/tmp and
 # work/test-evidence.
 #
@@ -232,7 +235,7 @@ function require_tools {
     local tool
     local missing=0
 
-    for tool in git make cmake patch cc cp date find grep ln mkdir mktemp readlink rm sed sha256sum sort tail tr wc xargs; do
+    for tool in git make cmake patch cc readelf cp date find grep ln mkdir mktemp readlink rm sed sha256sum sort tail tr wc xargs; do
         if ! command -v "${tool}" > /dev/null 2>&1; then
             printf "error: required command not found: %s\n" "${tool}" >&2
             missing=1
@@ -252,7 +255,7 @@ function setup {
     WORK="$(mktemp -d "${REPO}/work/tmp/test-uninstall-patch.XXXXXX")" || exit 2
     EVIDENCE="$(mktemp -d "${REPO}/work/test-evidence/run-$(date -u +%Y%m%dT%H%M%SZ)-XXXXXX")" || exit 2
     mkdir -p "${WORK}/repo" "${WORK}/tiny/tools"
-    (cd "${REPO}" && git ls-files -z | xargs -0 cp --parents -t "${WORK}/repo") || exit 2
+    (cd "${REPO}" && git ls-files -z --cached --others --exclude-standard | xargs -0 cp --parents -t "${WORK}/repo") || exit 2
     BUILD="${WORK}/repo/open62541-src/build"
     (cd "${WORK}/repo" && find . -type f | LC_ALL=C sort | xargs sha256sum) > "${EVIDENCE}/files.sha256"
     sha256sum "${SCRIPT_PATH}" >> "${EVIDENCE}/files.sha256"
@@ -376,36 +379,43 @@ function test_uninstall {
     fi
 
     if reinstall "${prefix}" "record"; then
-        printf "r\n" > "${prefix}/cfg/open62541-env.buildid"
+        mkdir -p "${prefix}/cfg/open62541"
+        printf "r\n" > "${prefix}/cfg/open62541/build-record"
+        printf "r\n" > "${prefix}/cfg/open62541/build-record.sha256"
         run_make uninstall
-        expect_path "make uninstall passes no record name and keeps a record file" exists "${prefix}/cfg/open62541-env.buildid"
+        expect_path "make uninstall removes the record directory of the library" absent "${prefix}/cfg/open62541"
+        expect_path "make uninstall keeps another package's file in cfg" exists "${prefix}/cfg/other.buildid"
     fi
 
     if reinstall "${prefix}" "record name"; then
-        printf "r\n" > "${prefix}/cfg/demo.buildid"
-        printf "r\n" > "${prefix}/cfg/demo.source"
+        mkdir -p "${prefix}/cfg/demo"
+        printf "r\n" > "${prefix}/cfg/demo/build-record"
+        printf "r\n" > "${prefix}/cfg/demo/build-record.sha256"
+        printf "x\n" > "${prefix}/cfg/demo/notes.txt"
         run_script "${BUILD}" demo
         expect_eq "uninstall with a record name exits 0" "0" "${MK_RC}"
-        expect_path "the .buildid record is removed" absent "${prefix}/cfg/demo.buildid"
-        expect_path "the .source record is removed" absent "${prefix}/cfg/demo.source"
+        expect_path "the build-record file is removed" absent "${prefix}/cfg/demo/build-record"
+        expect_path "the digest file is removed" absent "${prefix}/cfg/demo/build-record.sha256"
+        expect_path "a record directory keeps a file that is not a record file" exists "${prefix}/cfg/demo/notes.txt"
         expect_path "cfg stays while another package's file is in it" exists "${prefix}/cfg/other.buildid"
     fi
 
     if reinstall "${prefix}" "empty cfg"; then
         rm -f -- "${prefix}/cfg/other.buildid"
-        printf "r\n" > "${prefix}/cfg/demo.buildid"
+        mkdir -p "${prefix}/cfg/demo"
+        printf "r\n" > "${prefix}/cfg/demo/build-record"
         run_script "${BUILD}" demo
-        expect_path "cfg is removed when the records were its only content" absent "${prefix}/cfg"
+        expect_path "cfg is removed when the record was its only content" absent "${prefix}/cfg"
     fi
 
     if reinstall "${prefix}" "symlinked cfg"; then
-        mkdir -p "${WORK}/realcfg"
-        printf "r\n" > "${WORK}/realcfg/demo.buildid"
+        mkdir -p "${WORK}/realcfg/demo"
+        printf "r\n" > "${WORK}/realcfg/demo/build-record"
         rm -rf -- "${prefix}/cfg"
         ln -s "${WORK}/realcfg" "${prefix}/cfg"
         run_script "${BUILD}" demo
         expect_eq "a symlinked cfg makes uninstall exit 1" "1" "${MK_RC}"
-        expect_path "a record below a symlinked cfg is kept" exists "${WORK}/realcfg/demo.buildid"
+        expect_path "a record below a symlinked cfg is kept" exists "${WORK}/realcfg/demo/build-record"
     fi
 }
 
@@ -473,6 +483,113 @@ function test_patch {
     expect_has "apply without a source directory says so" "${MK_OUT}" "Source directory missing"
 }
 
+# run_record <top> <source> <patch file relative to top> [build directory]: sets MK_OUT
+# and MK_RC from the vendor record script
+function run_record {
+    MK_RC=0
+    MK_OUT="$(bash "${WORK}/repo/scripts/vendor-record.bash" write "${4:-${BUILD}}" "$1" "$2" open62541 1.3.15 tags/v1.3.15 "$3" 2>&1)" || MK_RC=$?
+}
+
+# record_lines <key>: the lines of the record that start with the key
+function record_lines {
+    grep "^$1=" "${WORK}/prefix/cfg/open62541/build-record" || true
+}
+
+function test_record {
+    local prefix="${WORK}/prefix"
+    local dir="${prefix}/cfg/open62541"
+    local lib="${prefix}/lib/libtiny.so.1.0"
+    local top="${WORK}/top"
+    local src="${WORK}/tinysrc"
+    local head
+    local sum
+    local id
+    local old_umask
+
+    printf "\n== record\n"
+    if ! reinstall "${prefix}" "record"; then
+        return 0
+    fi
+    old_umask="$(umask)"
+    umask 022
+    run_make install
+    umask "${old_umask}"
+    expect_eq "make install exits 0" "0" "${MK_RC}"
+    expect_eq "the record files get the mode that the umask gives" "644 644" \
+        "$(stat -c '%a' "${dir}/build-record") $(stat -c '%a' "${dir}/build-record.sha256")"
+    expect_eq "the digest file holds the sha256 of build-record" "$(sha256sum < "${dir}/build-record" | cut -d' ' -f1)" "$(cat "${dir}/build-record.sha256")"
+    expect_eq "the record keys come in the decided order" \
+        "format name version tag source upstream patch arch artifact buildid " "$(cut -d= -f1 "${dir}/build-record" | tr '\n' ' ')"
+    expect_eq "the upstream line is the pinned reference without tags/" "upstream=v1.3.15" "$(record_lines upstream)"
+    expect_eq "tag and source read unknown outside the own git root" "tag=unknown source=unknown" \
+        "$(record_lines tag | tr -d '\n') $(record_lines source)"
+    sum="$(sha256sum < "${lib}" | cut -d' ' -f1)"
+    id="$(readelf -n "${lib}" | sed -n 's/.*Build ID: *//p')"
+    id="${id:-none}"
+    expect_eq "the record lists the library only, with its sha256 and build-id" \
+        "artifact=lib/libtiny.so.1.0 ${sum} buildid=lib/libtiny.so.1.0 ${id}" \
+        "$(grep -E '^(artifact|buildid)=' "${dir}/build-record" | tr '\n' ' ' | sed 's/ $//')"
+    if [[ -f "${dir}/build-record" ]]; then
+        printf "junk=1\n" >> "${dir}/build-record"
+    fi
+    run_make install
+    expect_eq "a second install writes the record completely again" "0" "$(grep -c '^junk=' "${dir}/build-record" || true)"
+    expect_eq "no temporary file stays in the record directory" "build-record build-record.sha256 " \
+        "$(find "${dir}" -type f | sed 's|.*/||' | sort | tr '\n' ' ')"
+
+    mkdir -p "${top}/scripts" "${top}/patch" "${src}"
+    cp "${REPO}/scripts/apply_patch.bash" "${top}/scripts/apply_patch.bash"
+    printf -- "--- tiny.h\n+++ tiny.h\n@@ -2,6 +2,7 @@\n l2\n l3\n l4\n+new\n l5\n l6\n l7\n" > "${top}/patch/t.p0.patch"
+    printf "tracked\n" > "${top}/tracked.txt"
+    printf "l1\nl2\nl3\nl4\nl5\nl6\nl7\n" > "${src}/tiny.h"
+    git -C "${top}" init -q
+    git -C "${top}" add -A
+    git -C "${top}" -c user.name=test -c user.email=test@example.invalid commit -q --no-verify -m init
+    head="$(git -C "${top}" rev-parse HEAD)"
+
+    run_record "${top}" "${src}" patch/t.p0.patch
+    expect_eq "a clean tree without a tag reads untagged and the commit" "tag=untagged source=${head}" \
+        "$(record_lines tag | tr -d '\n') $(record_lines source)"
+    expect_eq "an unapplied patch writes no patch line" "0" "$(record_lines patch | grep -c '' || true)"
+    printf "u\n" > "${top}/untracked.txt"
+    run_record "${top}" "${src}" patch/t.p0.patch
+    expect_eq "an untracked file does not make the tree dirty" "source=${head}" "$(record_lines source)"
+    git -C "${top}" tag 1.3.15-1
+    git -C "${top}" tag 1.3.15-2
+    git -C "${top}" tag 1.3.15-10
+    run_record "${top}" "${src}" patch/t.p0.patch
+    expect_eq "the tag is the highest by version order" "tag=1.3.15-10" "$(record_lines tag)"
+    printf "m\n" >> "${top}/tracked.txt"
+    run_record "${top}" "${src}" patch/t.p0.patch
+    expect_eq "a changed tracked file adds +dirty to the commit" "source=${head}+dirty" "$(record_lines source)"
+
+    printf "l1\nl2\nl3\nl4\nnew\nl5\nl6\nl7\n" > "${src}/tiny.h"
+    run_record "${top}" "${src}" patch/t.p0.patch
+    expect_eq "an applied patch is named in a patch line" "patch=t.p0.patch" "$(record_lines patch)"
+    printf "x1\nx2\nx3\nx4\nx5\nx6\nx7\n" > "${src}/tiny.h"
+    run_record "${top}" "${src}" patch/t.p0.patch
+    expect_eq "a state that cannot be classified reads patch=unknown" "patch=unknown" "$(record_lines patch)"
+    run_record "${top}" "${src}" patch/none.p0.patch
+    expect_eq "a missing patch file writes no patch line" "0" "$(record_lines patch | grep -c '' || true)"
+
+    if reinstall "${prefix}" "record symlinked cfg"; then
+        mkdir -p "${WORK}/linkcfg"
+        rm -rf -- "${prefix}/cfg"
+        ln -s "${WORK}/linkcfg" "${prefix}/cfg"
+        run_record "${top}" "${src}" patch/t.p0.patch
+        expect_eq "a symlinked cfg makes the record script exit 1" "1" "${MK_RC}"
+        expect_eq "nothing is written below a symlinked cfg" "0" "$(find "${WORK}/linkcfg" -mindepth 1 | wc -l)"
+    fi
+
+    mkdir -p "${WORK}/record-cache-only"
+    cp "${BUILD}/CMakeCache.txt" "${WORK}/record-cache-only/CMakeCache.txt"
+    run_record "${top}" "${src}" patch/t.p0.patch "${WORK}/record-cache-only"
+    expect_eq "a build directory without a manifest makes the record script exit 1" "1" "${MK_RC}"
+    MK_RC=0
+    bash "${WORK}/repo/scripts/vendor-record.bash" > /dev/null 2>&1 || MK_RC=$?
+    expect_eq "a call without arguments exits 2" "2" "${MK_RC}"
+}
+
 # conf_line <target> [make arguments]: prints the cmake line that make -n shows
 function conf_line {
     local target="$1"
@@ -517,6 +634,7 @@ function main {
     require_tools
     setup
     test_uninstall
+    test_record
     test_patch
     test_options
     TEST_COMPLETE=1

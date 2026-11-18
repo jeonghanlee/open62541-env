@@ -22,9 +22,10 @@ conf.static:
 
 src_install:
 	$(QUIET) make -C $(CMAKE_BUILD_PATH) install
+	$(QUIET) bash scripts/vendor-record.bash write "$(CMAKE_BUILD_PATH)" "$(TOP)" "$(SRC_PATH)" "$(SRC_NAME)" "$(SRC_VERSION)" "$(SRC_TAG)" "patch/$(SRC_VERSION).p0.patch"
 
 src_uninstall:
-	$(QUIET) bash scripts/uninstall-manifest.bash "$(CMAKE_BUILD_PATH)"
+	$(QUIET) bash scripts/uninstall-manifest.bash "$(CMAKE_BUILD_PATH)" "$(SRC_NAME)"
 
 src_clean:
 	$(QUIET) make -C $(CMAKE_BUILD_PATH) clean

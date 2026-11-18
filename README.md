@@ -83,7 +83,17 @@ make exist
 make exist LEVEL=3
 ```
 
-`make uninstall` removes exactly the files listed in `open62541-src/build/install_manifest.txt`, which `make install` writes. They are removed from the installation prefix that `make conf` stored in `open62541-src/build/CMakeCache.txt`; an `INSTALL_LOCATION` given to `make uninstall` is not used. Directories that become empty are removed; every other file in that prefix is kept. The target does not call `sudo`; run it with the rights that this prefix requires. Run it before `make distclean`, which removes the source directory `open62541-src` together with the manifest; without the manifest `make uninstall` prints a notice and removes nothing.
+`make uninstall` removes exactly the files listed in `open62541-src/build/install_manifest.txt`, which `make install` writes, and the two files of the vendor record described below. They are removed from the installation prefix that `make conf` stored in `open62541-src/build/CMakeCache.txt`; an `INSTALL_LOCATION` given to `make uninstall` is not used. Directories that become empty are removed; every other file in that prefix is kept. The target does not call `sudo`; run it with the rights that this prefix requires. Run it before `make distclean`, which removes the source directory `open62541-src` together with the manifest; without the manifest `make uninstall` prints a notice and removes nothing.
+
+## Vendor record
+
+On Linux, `make install` writes `<prefix>/cfg/open62541/build-record` and its digest file `<prefix>/cfg/open62541/build-record.sha256` for the shared objects it installed, in the `key=value` form that EPICS-env uses for its modules. `scripts/vendor-record.bash` writes them from the `install_manifest.txt`, so files of other packages in the same prefix are never listed. It needs `readelf` (the binutils package); macOS installations write no record.
+
+* `build-record`: the lines `format=1`, `name=open62541`, `version` (`SRC_VERSION`), `tag` and `source` (the tag and the commit of this repository), `upstream` (`SRC_TAG` without the leading `tags/`), `patch` (one line naming the patch file when the source clone carries it; no line when the patch is not applied or does not exist, and `patch=unknown` when its state cannot be determined), and `arch` (`linux-` and the machine name), in this order. Then, for each installed shared object, `artifact=<path> <sha256>` directly followed by `buildid=<path> <hex>`, sorted by path, with the path relative to the prefix. The build-id is read by `readelf -n` from the installed file, or `none` when the file has none. Symbolic links are not listed.
+* `tag` is the highest tag by version order on `HEAD`, `untagged`, or `unknown`; `source` is the full commit hash, followed by `+dirty` when a tracked file differs from `HEAD`, or `unknown` when it cannot be read from the repository root. Untracked and ignored files do not count.
+* `build-record.sha256`: one line, the sha256 of `build-record`.
+
+Both files are written through a temporary file in the same directory and renamed, with the mode the umask gives; `cfg` and `cfg/open62541` are created only when absent, the digest file is written after the record, and every install writes the record completely again. A `cfg` directory that is a symbolic link is never written through.
 
 ## Redhat variant OS
 

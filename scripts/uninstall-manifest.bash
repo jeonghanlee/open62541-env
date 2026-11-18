@@ -8,10 +8,10 @@
 # skipped when it lies outside the prefix, contains a parent reference, or
 # sits below a symlinked directory inside the prefix.
 #
-# When a record name is given, the two files <prefix>/cfg/<name>.buildid and
-# <prefix>/cfg/<name>.source are removed as well, and the cfg directory is
-# removed when it becomes empty. The Makefile passes no record name, so
-# make uninstall removes only the manifest files.
+# When a record name is given, the two files <prefix>/cfg/<name>/build-record and
+# <prefix>/cfg/<name>/build-record.sha256 are removed as well, then the directory
+# <prefix>/cfg/<name> and the cfg directory when they become empty. Other files in
+# these directories are kept. The Makefile passes the name of the library.
 #
 # Usage: uninstall-manifest.bash <cmake-build-dir> [<record-name>]
 #
@@ -132,8 +132,8 @@ function main {
     done < "${manifest}"
 
     if [[ -n "${name}" ]]; then
-        for ext in buildid source; do
-            record="${prefix}/cfg/${name}.${ext}"
+        for ext in build-record build-record.sha256; do
+            record="${prefix}/cfg/${name}/${ext}"
             if below_symlinked_dir "${record}" "${prefix}"; then
                 skipped=$((skipped + 1))
                 report_skip "${skipped}" "below symlinked directory" "${record}"

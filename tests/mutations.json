@@ -54,19 +54,21 @@
    "old": "rm -f -- \"${record}\"",
    "new": ": \"${record}\"",
    "intended": [
-    "the .buildid record is removed",
-    "the .source record is removed",
-    "cfg is removed when the records were its only content"
+    "the build-record file is removed",
+    "the digest file is removed",
+    "cfg is removed when the record was its only content"
    ],
-   "also": []
+   "also": [
+    "make uninstall removes the record directory of the library"
+   ]
   },
   {
    "id": "M06",
    "file": "configure/RULES_INSTALL",
-   "old": "bash scripts/uninstall-manifest.bash \"$(CMAKE_BUILD_PATH)\"",
-   "new": "bash scripts/uninstall-manifest.bash \"$(CMAKE_BUILD_PATH)\" \"open62541-env\"",
+   "old": "bash scripts/uninstall-manifest.bash \"$(CMAKE_BUILD_PATH)\" \"$(SRC_NAME)\"",
+   "new": "bash scripts/uninstall-manifest.bash \"$(CMAKE_BUILD_PATH)\"",
    "intended": [
-    "make uninstall passes no record name and keeps a record file"
+    "make uninstall removes the record directory of the library"
    ],
    "also": []
   },
@@ -232,6 +234,115 @@
     "revert on a clean source skips",
     "a second revert skips"
    ]
+  },
+  {
+   "id": "M21",
+   "file": "scripts/vendor-record.bash",
+   "old": "id=\"$(build_id \"${prefix}/${rel}\")\"",
+   "new": "id=none",
+   "intended": [
+    "the record lists the library only, with its sha256 and build-id"
+   ],
+   "also": []
+  },
+  {
+   "id": "M22",
+   "file": "scripts/vendor-record.bash",
+   "old": "if [[ ! -f \"${line}\" || -L \"${line}\" ]]; then",
+   "new": "if [[ ! -f \"${line}\" ]]; then",
+   "intended": [
+    "the record lists the library only, with its sha256 and build-id"
+   ],
+   "also": [
+    "the record keys come in the decided order"
+   ]
+  },
+  {
+   "id": "M23",
+   "file": "scripts/vendor-record.bash",
+   "old": "printf \"%s\\n\" \"${sum}\" | write_atomic \"${dir}/build-record.sha256\"",
+   "new": "printf \"%s\\n\" \"x${sum}\" | write_atomic \"${dir}/build-record.sha256\"",
+   "intended": [
+    "the digest file holds the sha256 of build-record"
+   ],
+   "also": []
+  },
+  {
+   "id": "M24",
+   "file": "scripts/vendor-record.bash",
+   "old": "1) marker=\"+dirty\" ;;",
+   "new": "1) marker=\"\" ;;",
+   "intended": [
+    "a changed tracked file adds +dirty to the commit"
+   ],
+   "also": []
+  },
+  {
+   "id": "M25",
+   "file": "scripts/vendor-record.bash",
+   "old": "diff --quiet HEAD > /dev/null 2>&1 || diff_status=$?",
+   "new": "diff --quiet HEAD > /dev/null 2>&1 || diff_status=$?\n    [[ -z \"$(git -C \"${top}\" ls-files --others)\" ]] || diff_status=1",
+   "intended": [
+    "an untracked file does not make the tree dirty"
+   ],
+   "also": []
+  },
+  {
+   "id": "M26",
+   "file": "scripts/vendor-record.bash",
+   "old": "sort -V | tail -n 1",
+   "new": "sort | tail -n 1",
+   "intended": [
+    "the tag is the highest by version order"
+   ],
+   "also": []
+  },
+  {
+   "id": "M27",
+   "file": "scripts/vendor-record.bash",
+   "old": "0) printf \"%s\\n\" \"patch=${patch_file##*/}\" ;;",
+   "new": "0) ;;",
+   "intended": [
+    "an applied patch is named in a patch line"
+   ],
+   "also": []
+  },
+  {
+   "id": "M28",
+   "file": "scripts/vendor-record.bash",
+   "old": "if [[ -L \"${cfg}\" || -L \"${dir}\" ]]; then",
+   "new": "if false; then",
+   "intended": [
+    "a symlinked cfg makes the record script exit 1",
+    "nothing is written below a symlinked cfg"
+   ],
+   "also": []
+  },
+  {
+   "id": "M29",
+   "file": "configure/RULES_INSTALL",
+   "old": "\t$(QUIET) bash scripts/vendor-record.bash write \"$(CMAKE_BUILD_PATH)\" \"$(TOP)\" \"$(SRC_PATH)\" \"$(SRC_NAME)\" \"$(SRC_VERSION)\" \"$(SRC_TAG)\" \"patch/$(SRC_VERSION).p0.patch\"\n",
+   "new": "",
+   "intended": [
+    "the record keys come in the decided order",
+    "the upstream line is the pinned reference without tags/",
+    "tag and source read unknown outside the own git root",
+    "the record lists the library only, with its sha256 and build-id",
+    "a second install writes the record completely again",
+    "no temporary file stays in the record directory",
+    "the record files get the mode that the umask gives"
+   ],
+   "also": []
+  },
+  {
+   "id": "M30",
+   "file": "scripts/vendor-record.bash",
+   "old": "mv -f -- \"${temporary}\" \"${destination}\"",
+   "new": "chmod 600 \"${temporary}\"\n    mv -f -- \"${temporary}\" \"${destination}\"",
+   "intended": [
+    "the record files get the mode that the umask gives"
+   ],
+   "also": []
   }
  ]
 }
