@@ -12,14 +12,14 @@ An open source implementation of OPC UA (`open62541`) Configuration Environment 
 * Debian and its variants
 
 ```bash
-sudo apt install git build-essential gcc pkg-config cmake python3 libssl3 libssl-dev
+sudo apt install git build-essential gcc pkg-config cmake python3 libssl3 libssl-dev libxml2-dev
 
 ```
 
 * Redhat and its variants
 
 ```bash
-sudo dnf install git gcc pkg-config cmake python3 patch openssl3 openssl3-devel compat-openssl10
+sudo dnf install git gcc pkg-config cmake python3 patch openssl3 openssl3-devel compat-openssl10 libxml2-devel
 
 ```
 
